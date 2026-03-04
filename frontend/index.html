@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dental Camp Report</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+<h1>Dental Camp Report Generator</h1>
+
+<form id="form" enctype="multipart/form-data">
+
+<input name="collegeName" placeholder="College Name" required>
+<input name="departmentName" placeholder="Department Name" required>
+<input name="campLocation" placeholder="Camp Location" required>
+
+<input name="reportDateShort" placeholder="Short Date">
+<input name="reportDateLong" placeholder="Long Date">
+
+<input name="associationName" placeholder="Association Name">
+<input name="projectName" placeholder="Project Name">
+
+<input name="startTime" placeholder="Start Time">
+<input name="endTime" placeholder="End Time">
+
+<input name="staffCount" placeholder="Staff">
+<input name="postgraduateCount" placeholder="Postgraduate">
+<input name="internCount" placeholder="Interns">
+
+<input name="totalPatients" placeholder="Total Patients">
+<input name="treatmentCount" placeholder="Treatment Count">
+<input name="maleCount" placeholder="Male">
+<input name="femaleCount" placeholder="Female">
+
+<h3>Screening</h3>
+<input name="dentalCaries" placeholder="Dental Caries">
+<input name="rootStump" placeholder="Root Stump">
+<input name="gingivitis" placeholder="Gingivitis">
+<input name="periodontitis" placeholder="Periodontitis">
+<input name="missing" placeholder="Missing">
+<input name="consultation" placeholder="Consultation">
+<input name="others" placeholder="Others">
+
+<h3>Treatment</h3>
+<input name="scaling" placeholder="Scaling">
+
+<h3>Upload Photos</h3>
+<input type="file" name="photos" multiple>
+
+<button type="submit">Generate Report</button>
+
+</form>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
