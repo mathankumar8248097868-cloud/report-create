@@ -1,12 +1,15 @@
 <!DOCTYPE html>
+
 <html>
 <head>
 <title>Dental Camp Report</title>
 <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <div class="container">
+
 <h1>Dental Camp Report Generator</h1>
 
 <form id="form" enctype="multipart/form-data">
@@ -33,17 +36,27 @@
 <input name="maleCount" placeholder="Male">
 <input name="femaleCount" placeholder="Female">
 
-<h3>Screening</h3>
-<input name="dentalCaries" placeholder="Dental Caries">
-<input name="rootStump" placeholder="Root Stump">
-<input name="gingivitis" placeholder="Gingivitis">
-<input name="periodontitis" placeholder="Periodontitis">
-<input name="missing" placeholder="Missing">
-<input name="consultation" placeholder="Consultation">
-<input name="others" placeholder="Others">
+<h3>Screening Statistics</h3>
 
-<h3>Treatment</h3>
+<div id="screeningContainer">
+
+<input name="dentalCaries" placeholder="Dental Caries">
+<input name="gingivitis" placeholder="Gingivitis">
+<input name="missing" placeholder="Missing">
+
+</div>
+
+<button type="button" onclick="addScreening()">Add Screening Field</button>
+
+<h3>Treatment Statistics</h3>
+
+<div id="treatmentContainer">
+
 <input name="scaling" placeholder="Scaling">
+
+</div>
+
+<button type="button" onclick="addTreatment()">Add Treatment Field</button>
 
 <h3>Upload Photos</h3>
 <input type="file" name="photos" multiple>
@@ -51,8 +64,10 @@
 <button type="submit">Generate Report</button>
 
 </form>
+
 </div>
 
 <script src="script.js"></script>
+
 </body>
 </html>
