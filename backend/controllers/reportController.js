@@ -8,6 +8,8 @@ const {
   PageBreak,
   UnderlineType,
   Footer,
+  TabStopType,
+  TabStopPosition,
   Table,
   TableRow,
   TableCell,
@@ -25,14 +27,15 @@ const chartCanvas = new ChartJSNodeCanvas({
 
 exports.generateReport = async (req, res) => {
   try {
+
     const d = req.body;
     const photos = req.files || [];
+    const children = [];
 
-    // ===== HELPER FUNCTIONS =====
     const heading = (text) =>
       new Paragraph({
         alignment: AlignmentType.CENTER,
-        spacing: { line: 360 }, // 1.5 line spacing
+        spacing: { line: 360 },
         children: [
           new TextRun({
             text: text.toUpperCase(),
@@ -47,7 +50,7 @@ exports.generateReport = async (req, res) => {
     const normalText = (text, center = false) =>
       new Paragraph({
         alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT,
-        spacing: { line: 360 }, // 1.5 line spacing
+        spacing: { line: 480 },
         children: [
           new TextRun({
             text: String(text),
@@ -60,12 +63,12 @@ exports.generateReport = async (req, res) => {
     const blank = () =>
       new Paragraph({
         text: "",
-        spacing: { line: 360 }, // 1.5 line spacing for blank lines
+        spacing: { line: 480 },
       });
 
-    const children = [];
 
     // ================= PAGE 1 =================
+
     children.push(heading(d.collegeName));
     children.push(heading(d.departmentName));
     children.push(heading(`Camp Report – ${d.campLocation}`));
@@ -80,7 +83,7 @@ exports.generateReport = async (req, res) => {
 
     children.push(
       normalText(
-        `Dr R. Palanivel Pandian organised this program. The Camp started at ${d.startTime} and ended at ${d.endTime}. A team of dentists including ${d.staffCount} staff member, ${d.postgraduateCount} postgraduate and ${d.internCount} interns provided oral health care to the people.`
+        `Dr R. Palanivel Pandian organised this program. The Camp started at ${d.startTime} and ended at ${d.endTime}. A team of dentists including ${d.staffCount} staff member, ${d.postgraduateCount} postgraduate member and ${d.internCount} interns member provided oral health care to the people.`
       )
     );
 
@@ -92,32 +95,53 @@ exports.generateReport = async (req, res) => {
 
     children.push(new Paragraph({ children: [new PageBreak()] }));
 
+
     // ================= PAGE 2 PHOTOS =================
+
     children.push(heading("Photos"));
 
-    for (let photo of photos) {
-      const img = fs.readFileSync(photo.path);
+    for (let i = 0; i < photos.length; i += 2) {
+
+      const img1 = photos[i] ? fs.readFileSync(photos[i].path) : null;
+      const img2 = photos[i + 1] ? fs.readFileSync(photos[i + 1].path) : null;
+
       children.push(
         new Paragraph({
-          alignment: AlignmentType.CENTER,
-          children: [
-            new ImageRun({
-              data: img,
-              transformation: { width: 400, height: 250 },
-            }),
+          tabStops: [
+            {
+              type: TabStopType.RIGHT,
+              position: TabStopPosition.MAX,
+            },
           ],
           spacing: { line: 360 },
+          children: [
+
+            img1
+              ? new ImageRun({
+                  data: img1,
+                  transformation: { width: 250, height: 170 },
+                })
+              : new TextRun(""),
+
+            new TextRun({ text: "\t" }),
+
+            img2
+              ? new ImageRun({
+                  data: img2,
+                  transformation: { width: 250, height: 170 },
+                })
+              : new TextRun(""),
+          ],
         })
       );
+
+      children.push(blank());
     }
 
     children.push(new Paragraph({ children: [new PageBreak()] }));
 
+
     // ================= PAGE 3 CAMP STATISTICS =================
-    const campDataRows = [
-      ["Male", d.maleCount],
-      ["Female", d.femaleCount],
-    ];
 
     const campTable = new Table({
       alignment: AlignmentType.CENTER,
@@ -129,19 +153,18 @@ exports.generateReport = async (req, res) => {
             new TableCell({ children: [normalText("No of Patients", true)] }),
           ],
         }),
-        ...campDataRows.map(
-          (row) =>
-            new TableRow({
-              children: row.map(
-                (val) =>
-                  new TableCell({
-                    children: [normalText(val, true)],
-                    verticalAlign: "center",
-                    width: { size: 50, type: WidthType.PERCENTAGE },
-                  })
-              ),
-            })
-        ),
+        new TableRow({
+          children: [
+            new TableCell({ children: [normalText("Male", true)] }),
+            new TableCell({ children: [normalText(d.maleCount, true)] }),
+          ],
+        }),
+        new TableRow({
+          children: [
+            new TableCell({ children: [normalText("Female", true)] }),
+            new TableCell({ children: [normalText(d.femaleCount, true)] }),
+          ],
+        }),
       ],
     });
 
@@ -151,7 +174,6 @@ exports.generateReport = async (req, res) => {
         labels: ["Male", "Female"],
         datasets: [
           {
-            label: "No of Patients",
             data: [parseInt(d.maleCount), parseInt(d.femaleCount)],
             backgroundColor: "lightblue",
           },
@@ -160,8 +182,18 @@ exports.generateReport = async (req, res) => {
       options: {
         plugins: { legend: { display: false } },
         scales: {
-          x: { title: { display: true, text: "Gender" } },
-          y: { title: { display: true, text: "No of Patients" } },
+          x: {
+            title: {
+              display: true,
+              text: "Gender",
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: "No of Patients",
+            },
+          },
         },
       },
     });
@@ -169,6 +201,7 @@ exports.generateReport = async (req, res) => {
     children.push(heading("Camp Statistics"));
     children.push(campTable);
     children.push(blank());
+
     children.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
@@ -178,22 +211,24 @@ exports.generateReport = async (req, res) => {
             transformation: { width: 500, height: 300 },
           }),
         ],
-        spacing: { line: 360 },
       })
     );
 
     children.push(new Paragraph({ children: [new PageBreak()] }));
 
-    // ================= PAGE 4 SCREENING STATISTICS =================
-    const screeningDataRows = [
-      ["Dental Caries", d.dentalCaries],
-      ["Root Stump", d.rootStump],
-      ["Gingivitis", d.gingivitis],
-      ["Periodontitis", d.periodontitis],
-      ["Missing", d.missing],
-      ["Consultation", d.consultation],
-      ["Others", d.others],
+
+    // ================= PAGE 4 SCREENING =================
+
+    let screeningRows = [
+      ["Dental Caries", d.dentalCaries || 0],
+      ["Gingivitis", d.gingivitis || 0],
+      ["Missing", d.missing || 0],
     ];
+
+    if (d.rootStump) screeningRows.push(["Root Stump", d.rootStump]);
+    if (d.periodontitis) screeningRows.push(["Periodontitis", d.periodontitis]);
+    if (d.consultation) screeningRows.push(["Consultation", d.consultation]);
+    if (d.others) screeningRows.push(["Others", d.others]);
 
     const screeningTable = new Table({
       alignment: AlignmentType.CENTER,
@@ -205,17 +240,13 @@ exports.generateReport = async (req, res) => {
             new TableCell({ children: [normalText("No of Patients", true)] }),
           ],
         }),
-        ...screeningDataRows.map(
-          (row) =>
+        ...screeningRows.map(
+          (r) =>
             new TableRow({
-              children: row.map(
-                (val) =>
-                  new TableCell({
-                    children: [normalText(val, true)],
-                    verticalAlign: "center",
-                    width: { size: 50, type: WidthType.PERCENTAGE },
-                  })
-              ),
+              children: [
+                new TableCell({ children: [normalText(r[0], true)] }),
+                new TableCell({ children: [normalText(r[1], true)] }),
+              ],
             })
         ),
       ],
@@ -224,11 +255,10 @@ exports.generateReport = async (req, res) => {
     const screeningChart = await chartCanvas.renderToBuffer({
       type: "bar",
       data: {
-        labels: screeningDataRows.map((r) => r[0]),
+        labels: screeningRows.map((r) => r[0]),
         datasets: [
           {
-            label: "No of Patients",
-            data: screeningDataRows.map((r) => r[1]),
+            data: screeningRows.map((r) => parseInt(r[1])),
             backgroundColor: "lightblue",
           },
         ],
@@ -236,8 +266,18 @@ exports.generateReport = async (req, res) => {
       options: {
         plugins: { legend: { display: false } },
         scales: {
-          x: { title: { display: true, text: "Diagnosis" } },
-          y: { title: { display: true, text: "No of Patients" } },
+          x: {
+            title: {
+              display: true,
+              text: "Diagnosis",
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: "No of Patients",
+            },
+          },
         },
       },
     });
@@ -245,6 +285,7 @@ exports.generateReport = async (req, res) => {
     children.push(heading("Screening Statistics"));
     children.push(screeningTable);
     children.push(blank());
+
     children.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
@@ -254,14 +295,13 @@ exports.generateReport = async (req, res) => {
             transformation: { width: 500, height: 300 },
           }),
         ],
-        spacing: { line: 360 },
       })
     );
 
     children.push(new Paragraph({ children: [new PageBreak()] }));
 
+
     // ================= PAGE 5 TREATMENT =================
-    const treatmentDataRows = [["Scaling", d.scaling]];
 
     const treatmentTable = new Table({
       alignment: AlignmentType.CENTER,
@@ -273,19 +313,12 @@ exports.generateReport = async (req, res) => {
             new TableCell({ children: [normalText("No of Patients", true)] }),
           ],
         }),
-        ...treatmentDataRows.map(
-          (row) =>
-            new TableRow({
-              children: row.map(
-                (val) =>
-                  new TableCell({
-                    children: [normalText(val, true)],
-                    verticalAlign: "center",
-                    width: { size: 50, type: WidthType.PERCENTAGE },
-                  })
-              ),
-            })
-        ),
+        new TableRow({
+          children: [
+            new TableCell({ children: [normalText("Scaling", true)] }),
+            new TableCell({ children: [normalText(d.scaling || 0, true)] }),
+          ],
+        }),
       ],
     });
 
@@ -295,8 +328,7 @@ exports.generateReport = async (req, res) => {
         labels: ["Scaling"],
         datasets: [
           {
-            label: "No of Patients",
-            data: [d.scaling],
+            data: [parseInt(d.scaling || 0)],
             backgroundColor: "lightblue",
           },
         ],
@@ -304,8 +336,18 @@ exports.generateReport = async (req, res) => {
       options: {
         plugins: { legend: { display: false } },
         scales: {
-          x: { title: { display: true, text: "Treatment" } },
-          y: { title: { display: true, text: "No of Patients" } },
+          x: {
+            title: {
+              display: true,
+              text: "Treatment",
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: "No of Patients",
+            },
+          },
         },
       },
     });
@@ -313,6 +355,7 @@ exports.generateReport = async (req, res) => {
     children.push(heading("Treatment Statistics"));
     children.push(treatmentTable);
     children.push(blank());
+
     children.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
@@ -322,16 +365,13 @@ exports.generateReport = async (req, res) => {
             transformation: { width: 500, height: 300 },
           }),
         ],
-        spacing: { line: 360 },
       })
     );
 
-    // ================= FOOTER =================
     const footer = new Footer({
       children: [
         new Paragraph({
           alignment: AlignmentType.CENTER,
-          spacing: { line: 360 },
           children: [
             new TextRun({
               text:
@@ -345,7 +385,6 @@ exports.generateReport = async (req, res) => {
       ],
     });
 
-    // ================= CREATE DOCUMENT =================
     const doc = new Document({
       sections: [
         {
@@ -361,7 +400,9 @@ exports.generateReport = async (req, res) => {
       "Content-Disposition",
       "attachment; filename=Camp_Report.docx"
     );
+
     res.send(buffer);
+
   } catch (err) {
     console.log(err);
     res.status(500).send("Error generating report");
